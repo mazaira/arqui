@@ -4,7 +4,7 @@
 
 
 	ORG $0
-	DC.L $7000 *Stack pointer
+	DC.L $8000 *Stack pointer
 	DC.L    PPAL1
 
 
@@ -13,9 +13,9 @@
 *Reserva de memoria
 	ORG $400
 
-BuffSA: DS.B 2000
+BuffSA1: DS.B 2000
 EndSA: DS.B 4
-PuntSA: DS.B 4
+PuntSA1: DS.B 4
 RecARTI: DS.B 4
 
 BuffPA: DS.B 2000
@@ -61,24 +61,23 @@ INIT:
 	
 	LEA BuffSA,A1
 	MOVE.L A1,PuntSA
-	ADD.L #5,A1
-	MOVE.L A1,EndSA
+	MOVE.B PuntSA+2000,EndSA
+	
 	
 	LEA BuffPA,A1
 	MOVE.L A1,PuntPA
-	MOVE.L #2000,A2
-	ADD.L A2,A1
-	MOVE.L A1,EndPA
+	MOVE.B PuntPA+2000,EndPA
+	
 	
 	LEA BuffSB,A1
 	MOVE.L A1,PuntSB
-	MOVE.L #2000,A2
+	MOVE.L #$2000,A2
 	ADD.L A2,A1
 	MOVE.L A1,EndSB
 
 	LEA BuffPB,A1
 	MOVE.L A1,PuntPB
-	MOVE.L #2000,A2
+	MOVE.L #$2000,A2
 	ADD.L A2,A1
 	MOVE.L A1,EndPB
 
@@ -90,14 +89,14 @@ INIT:
 
 LEECAR:
 	LINK A6,#0
-	MOVE.L D0,A0
-	CMP.W #0,A0					*Switch 
+	MOVE.L D0,A3
+	CMP.W #0,A3				*Switch 
 	BEQ LEECARSA
-	CMP.W #1,A0
+	CMP.W #1,A3
 	BEQ LEECARSB
-	CMP.W #2,A0
+	CMP.W #2,A3
 	BEQ LEECARPA 
-	CMP.W #3,A0
+	CMP.W #3,A3
 	BEQ LEECARPB
 	MOVE.L #$FFFFFFFF,D0
 	BRA FIN 
@@ -105,9 +104,9 @@ LEECAR:
 LEECARSA:
 	MOVE.L PuntSA,A1
 	MOVE.L BuffSA,A2
-	CMP.L A1,A2
+	CMP.W A1,A2
 	BEQ EMPTY
-	MOVE.L (A1)+,D0
+	MOVE.B (A1)+,D0
 	MOVE.L A1,PuntSA
 	BRA FIN
 
@@ -150,63 +149,76 @@ EMPTY:
 
 ESCCAR:
 	LINK A6,#0
-	CMP.W #0,D0					*Switch 
+	MOVE.L D0,A1
+	CMP.W #0,A1				*Switch 
 	BEQ ESCCARSA
-	CMP.W #1,D0
+	CMP.W #1,A1
 	BEQ ESCCARSB
-	CMP.W #2,D0
+	CMP.W #2,A1
 	BEQ ESCCARPA 
-	CMP.W #3,D0
+	CMP.W #3,A1
 	BEQ ESCCARPB
 	MOVE.L #$FFFFFFFF,D0
 	BRA FIN 
 
 ESCCARSA:
-	MOVE.W #$2700,SR
-	BSET #0,IMRCopia
-	MOVE.B IMRCopia,$effc0B
-	MOVE.W #$2000,SR
-	MOVE.L PuntSA,A2
+	*MOVE.W #$2700,SR
+	*BSET #0,IMRCopia
+	*MOVE.B IMRCopia,$effc0B
+	*MOVE.W #$2000,SR
+	MOVE.W PuntSA,A2
 	MOVE.L EndSA,A3
-	CMP.L A2,A3
+	CMP.W A2,A3
 	BEQ FULL
-	MOVE.B D1,(A2)+
+	ADD.W #1,A2
+	MOVE.B D1,D2
+	MOVE.B D2,(A2)+
+	CLR.W D0
 	BRA FIN
 
 ESCCARSB:
-	MOVE.w #$2700,SR
-	MOVE.B IMRCopia,$effc0B
-	BSET #4,$effc0B
-	MOVE.W #$2000,SR
-	MOVE.L PuntSB,A2
+	*MOVE.w #$2700,SR
+	*MOVE.B IMRCopia,$effc0B
+	*BSET #4,$effc0B
+	*MOVE.W #$2000,SR
+	MOVE.W PuntSB,A2
 	MOVE.L EndSB,A3
 	CMP.L A2,A3
 	BEQ FULL
-	MOVE.B D1,(A2)+
+	ADD.w #1,A2
+	MOVE.B D1,D2
+	MOVE.B D2,(A2)+
+	CLR.W D0
 	BRA FIN
 
 ESCCARPA:
-	MOVE.w #$2700,SR
-	MOVE.B IMRCopia,$effc0B
-	BSET #0,$effc0B
-	MOVE.W #$2000,SR
+	*MOVE.w #$2700,SR
+	*MOVE.B IMRCopia,$effc0B
+	*BSET #0,$effc0B
+	*MOVE.W #$2000,SR
 	MOVE.L PuntPA,A2
 	MOVE.L EndPA,A3
 	CMP.L A2,A3
 	BEQ FULL
-	MOVE.L D1,(A2)+
+	ADD.W #1,A2
+	MOVE.B D1,D2
+	MOVE.B D2,(A2)+
+	CLR.W D0
 	BRA FIN
 
 ESCCARPB:
-	MOVE.w #$2700,SR
-	MOVE.B IMRCopia,$effc0B
-	BSET #4,$effc0B
-	MOVE.W #$2000,SR
+	*MOVE.w #$2700,SR
+	*MOVE.B IMRCopia,$effc0B
+	*BSET #4,$effc0B
+	*MOVE.W #$2000,SR
 	MOVE.L PuntPB,A2
 	MOVE.L EndPB,A3
 	CMP.L A2,A3
 	BEQ FULL
-	MOVE.L D1,(A2)+
+	ADD.w #1,A2
+	MOVE.B D1,D2
+	MOVE.B D2,(A2)+
+	CLR.W D0
 	BRA FIN
 FULL:
 	MOVE.L #$FFFFFFFF,D0
@@ -215,24 +227,36 @@ FULL:
 **** FIN ESCCAR*******
 
 ****SCAN*******
-
+CONTS	DS.W 	1
 SCAN:
 	LINK A6,#0
 	MOVE.L 8(A6),A1 *dir buffer
 	MOVE.W 12(A6),A2 *descriptor
 	MOVE.W 14(A6),A3 *tamaño
 	MOVE.L A2,D0
+	
+
 BUCLE_SCAN:
 	CMP.W #0,A3
 	BEQ FIN
-	BRA LEECAR
+	BSR LEECAR
+	CMP.W #$FFFFFFFF,D0
+	BEQ FIN_SCAN
 	SUB.W #1,A3
-	BRA BUCLE_SCAN
+	ADD.W #$1,CONTS
+	CMP.W #0,A3
+	BEQ FIN_SCAN
+	BSR BUCLE_SCAN
+FIN_SCAN:
+	MOVE.L CONTS,D0
+	BRA FIN
+
 
 **** FIN SCAN *******
 
 
 ****PRINT*******
+CONTP	DS.W 	1
 
 PRINT:
 	LINK A6,#0
@@ -243,10 +267,18 @@ PRINT:
 BUCLE_PRINT:
 	CMP.W #0,A3
 	BEQ FIN
-	MOVE.L (A1)+,D1
-	BRA ESCCAR
+	MOVE.L A2,D1
+	BSR ESCCAR
+	CMP.W #$FFFFFFFF,D0
+	BEQ FIN_PRINT
 	SUB.W #1,A3
-	BRA BUCLE_PRINT
+	ADD.W #$1,CONTP
+	CMP.W #0,A3
+	BEQ FIN_PRINT
+	BSR BUCLE_PRINT
+FIN_PRINT:
+	MOVE.L CONTP,D0
+	BRA FIN
 
 
 **** FIN PRINT*******
@@ -268,7 +300,6 @@ RTI:
 	MOVE.L A1,-(A7)
 	MOVE.L A2,-(A7)
 	MOVE.L A3,-(A7)
-	MOVE.L A4,-(A7)
 	MOVE.B IMRCopia,D1
 
 	BTST #0,D1
@@ -310,7 +341,6 @@ RecB:
 	
 	
 FIN_RTI:
-	MOVE.L (A7)+,A4
 	MOVE.L (A7)+,A3
 	MOVE.L (A7)+,A2
 	MOVE.L (A7)+,A1
@@ -324,50 +354,57 @@ FIN_RTI:
 
 
 		*** Prueba básica:
-BUFFER1:
-        DS.B		2000
 
-PARDIR1:
-        DC.L		0
+
+
+**************************** PROGRAMA PRINCIPAL **************************************
+	ORG $4000
+
+* Bufferes para PRINT 
+*BUFFER	DC.B	$61,$62,$d,$63,$64,$d,$65,$66,$31,$32,$d,$33,$34,$d,$35,$36
+*BUFFER	DC.B	$61,$d
+BuffSA	DC.B	$d,$a,$31,$32,$33,$d,$a,$34,$35,$36
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B	$31,$32,$33,$34,$35,$36,$37,$38,$39,$30
+    DC.B    $31,$d,$31,$d
+
+PuntSA: DC.L 0
+
+
+
+
+*** PRUEBA SCAN
+    MOVE.W #10,-(A7) * tamano
+    MOVE.W #0,-(A7) * descriptor
+    MOVE.L #$4500,-(A7)
+    BSR SCAN
+*** FIN PRUEBA SCAN
+
+	BREAK
+
+**************************** FIN PROGRAMA PRINCIPAL **********************************
 
 PPAL1:
-		BSR 		INIT 
-		MOVE.W		#$2000,SR
-		MOVE.L		#BUFFER1,PARDIR1
-		MOVE.W 		#18,-(A7) 
-		MOVE.W 		#1,-(A7) 
-		MOVE.L		PARDIR1,-(A7) 
-		BSR 		SCAN
-		ADD.L 		#8,A7 			* Restablece la pila
-		ADD.L       D0,PARDIR1 
-		MOVE.W 		#18,-(A7) 
-		MOVE.W 		#1,-(A7) 
-		MOVE.L		PARDIR1,-(A7)
-		BSR 		SCAN
-		ADD.L 		#8,A7 			* Restablece la pila
-		MOVE.L		#BUFFER1,PARDIR1
-		MOVE.W 		#8,-(A7) 
-		MOVE.W 		#0,-(A7) 
-		MOVE.L		PARDIR1,-(A7)
-		BSR 		PRINT
-		BREAK
+	MOVE.L #$8000,A7 * dir de pila
+	BSR INIT
+	MOVE.W #4,-(A7) * tamano
+    MOVE.W #1,-(A7) * descriptor
+    MOVE.L #$4000,-(A7)
+	BSR PRINT
+
+	
+
+	BREAK
 
 
 
-BUFFER: 
-		DS.B 2100 					* Buffer para lectura y escritura de caracteres
-CONTL: 
-		DC.W 0 						* Contador de lŽineas
-CONTC: 
-		DC.W 0 						* Contador de caracteres
-DIRLEC: 
-		DC.L 0 						* DirecciŽon de lectura para SCAN
-DIRESC: 
-		DC.L 0 						* DirecciŽon de escritura para PRINT
-TAME: 
-		DC.W 0 						* Tama~no de escritura para print
-DESA: 	EQU 0 						* Descriptor lŽinea A
-DESB: 	EQU 1 						* Descriptor lŽinea B
-NLIN: 	EQU 2 						* NŽumero de lŽineas a leer
-TAML: 	EQU 10 						* Tama~no de lŽinea para SCAN
-TAMB: 	EQU 10 						* Tama~no de bloque para PRINT
+
+*$BSVC/68kasm -la es_int.s
